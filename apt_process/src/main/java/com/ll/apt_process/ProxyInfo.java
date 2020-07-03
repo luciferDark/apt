@@ -21,8 +21,8 @@ import javax.xml.bind.ValidationEvent;
  */
 public class ProxyInfo {
     private static final String PORXY_INDEX = "_ViewBindind";
-//用于保存该类中所有被注解的View变量
-public Map<Integer, VariableElement> validationEventMap = new HashMap<>();
+    //用于保存该类中所有被注解的View变量
+    public Map<Integer, VariableElement> validationEventMap = new HashMap<>();
     public String proxyClassName;
     public String proxyClassPackageName;
     private TypeElement typeElement;
@@ -30,8 +30,9 @@ public Map<Integer, VariableElement> validationEventMap = new HashMap<>();
     public ProxyInfo(String proxyClassPackageName, TypeElement typeElement) {
         this.proxyClassPackageName = proxyClassPackageName;
         this.typeElement = typeElement;
-        this.proxyClassName = getClassName(proxyClassPackageName,typeElement) + PORXY_INDEX;
+        this.proxyClassName = getClassName(proxyClassPackageName, typeElement) + PORXY_INDEX;
     }
+
     /**
      * 获取生成的代理类的类名
      * 之所以用字符串截取、替换而没用clas.getSimpleName()的原因是为了处理内部类注解的情况，比如adapter.ViewHolder
@@ -41,21 +42,37 @@ public Map<Integer, VariableElement> validationEventMap = new HashMap<>();
         String fullClassNameWithPackage = typeElement.getQualifiedName().toString();
         int packageNameLen = proxyClassPackageName.length() + 1;
         return fullClassNameWithPackage.substring(packageNameLen)
-                .replace(".","$");
+                .replace(".", "$");
     }
 
-    public TypeSpec generateProxyClass(){
+    public TypeSpec generateProxyClass() {
         TypeName typeName = TypeName.get(typeElement.asType());
-        ClassName className = ClassName.get(proxyClassPackageName,proxyClassName);
-
-        MethodSpec.Builder methodBuilder = MethodSpec.constructorBuilder()
+        ClassName className = ClassName.get(proxyClassPackageName, proxyClassName);
+        //创建方法
+        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("inject")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(typeName,"target", Modifier.FINAL)
+                .addParameter(typeName, "target", Modifier.FINAL)
                 .addParameter(ClassName.get("android.view", "View"),
                         "source", Modifier.FINAL);
+        for (int id : validationEventMap.keySet()) {
+            VariableElement element = validationEventMap.get(id);
+            String fieldName = element.getSimpleName().toString();
+            methodBuilder.addStatement(" if (source instanceof android.app.Activity)" +
+                    " { target.$L = ((android.app.Activity) source).findViewById( $L); }" +
+                    "else{ target.$L = ((android.view.View) source).findViewById( $L);}",
+                    fieldName, id,
+                    fieldName, id);
+        }
 
+        MethodSpec bindMethodSpec = methodBuilder.build();
 
+        //创建类
+        TypeSpec typeSpec = TypeSpec.classBuilder(proxyClassName)
+                .addModifiers(Modifier.PUBLIC)
+//                .addSuperinterface()
+                .addMethod(bindMethodSpec)
+                .build();
 
-        return null;
+        return typeSpec;
     }
 }

@@ -81,6 +81,7 @@ public class LLBindViewProcess extends AbstractProcessor {
             }
             proxyInfo.validationEventMap.put(resourceIdParam, variableElement);
         }
+
     }
     private void processOnClick(RoundEnvironment roundEnvironment) {
         print("start to processOnClick：");
