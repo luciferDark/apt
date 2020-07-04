@@ -3,7 +3,9 @@ package com.ll.apt_process;
 import com.google.auto.service.AutoService;
 import com.ll.apt_annotation.LLBindView;
 import com.ll.apt_annotation.LLOnClick;
+import com.squareup.javapoet.JavaFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -24,16 +26,14 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
-//使用注解代替复写getSupportedSourceVersion 和getSupportedAnnotationTypes方法
-@AutoService(Processor.class)
+//getSupportedSourceVersion getSupportedAnnotationTypes
 //@SupportedSourceVersion(SourceVersion.RELEASE_8)
 //@SupportedAnnotationTypes({"com.ll.apt_annotation.LLOnClick","com.ll.apt_annotation.LLBindView"})
+@AutoService(Processor.class)
 public class LLBindViewProcess extends AbstractProcessor {
-    private Filer mFiler;//生成文件工具栏
-    private Messager messager;//打印信息
+    private Filer mFiler;
+    private Messager messager;
 
-
-    //元素相关
     private Elements elementUtils;
     private Types types;
     private Map<String, ProxyInfo> proxyInfoMap = new HashMap<>();
@@ -49,17 +49,34 @@ public class LLBindViewProcess extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        print("process start set SIZE：" + set.size());
-        print("start to process BindView：");
+        print("process start set SIZE" + set.size());
+        print("start to process BindView");
         processBindView(roundEnvironment);
-        processOnClick(roundEnvironment);
-//        processWriteClass(roundEnvironment);
-        return false;
+//        processOnClick(roundEnvironment);
+        processWriteClass(roundEnvironment);
+        return true;
+    }
+
+    private void processWriteClass(RoundEnvironment roundEnvironment) {
+        for (String key : proxyInfoMap.keySet()){
+            ProxyInfo itemInfo = proxyInfoMap.get(key);
+
+            JavaFile javaFile = JavaFile.builder(itemInfo.proxyClassPackageName,
+                    itemInfo.generateProxyClass())
+                    .addFileComment("auto generate proxy class")
+                    .build();
+
+            try {
+                javaFile.writeTo(mFiler);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void processBindView(RoundEnvironment roundEnvironment) {
         Set<? extends Element> mLLBindViewElements = roundEnvironment.getElementsAnnotatedWith(LLBindView.class);
-        print("start to processBindView：");
+        print("start to processBindView");
         if (null == mLLBindViewElements || mLLBindViewElements.size() <= 0){
             print("not element with bindView annotation");
             return;
@@ -79,12 +96,11 @@ public class LLBindViewProcess extends AbstractProcessor {
                 proxyInfo = new ProxyInfo(packageName, typeElement);
                 proxyInfoMap.put(className, proxyInfo);
             }
-            proxyInfo.validationEventMap.put(resourceIdParam, variableElement);
+            proxyInfo.validationEventMap_BindView.put(resourceIdParam, variableElement);
         }
-
     }
     private void processOnClick(RoundEnvironment roundEnvironment) {
-        print("start to processOnClick：");
+        print("start to processOnClick");
         Set<? extends Element> mLLOnClickElements = roundEnvironment.getElementsAnnotatedWith(LLBindView.class);
 
         if (null == mLLOnClickElements || mLLOnClickElements.size() <= 0){
@@ -108,7 +124,7 @@ public class LLBindViewProcess extends AbstractProcessor {
                 proxyInfoMap.put(className, proxyInfo);
             }
             for (int id : resourceIdParam){
-                proxyInfo.validationEventMap.put(id, variableElement);
+                proxyInfo.validationEventMap_OnClick.put(id, variableElement);
             }
         }
     }
@@ -118,7 +134,7 @@ public class LLBindViewProcess extends AbstractProcessor {
         Set<String> types = new LinkedHashSet<>();
         types.add(LLBindView.class.getCanonicalName());
         types.add(LLOnClick.class.getCanonicalName());
-        return super.getSupportedAnnotationTypes();
+        return types;
     }
 
     @Override

@@ -3,12 +3,10 @@ apply plugin: 'java-library'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation project(":apt_annotation")
-
     implementation project(':apt_annotation')
-    implementation 'com.google.auto.service:auto-service:1.0-rc2'
+    implementation 'com.google.auto.service:auto-service:1.0-rc6'
     implementation 'com.squareup:javapoet:1.11.1'
-
+    annotationProcessor 'com.google.auto.service:auto-service:1.0-rc6'
 }
 
 sourceCompatibility = "1.7"

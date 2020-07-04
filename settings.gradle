@@ -1,5 +1,5 @@
-include ':apt_process'
-include ':apt_annotation'
-include ':apt_library'
 include ':app'
+include ':apt_annotation'
+include ':apt_process'
+include ':apt_library'
 rootProject.name = "apt"
