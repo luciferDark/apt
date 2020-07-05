@@ -52,7 +52,7 @@ public class LLBindViewProcess extends AbstractProcessor {
         print("process start set SIZE" + set.size());
         print("start to process BindView");
         processBindView(roundEnvironment);
-//        processOnClick(roundEnvironment);
+        processOnClick(roundEnvironment);
         processWriteClass(roundEnvironment);
         return true;
     }
@@ -101,7 +101,7 @@ public class LLBindViewProcess extends AbstractProcessor {
     }
     private void processOnClick(RoundEnvironment roundEnvironment) {
         print("start to processOnClick");
-        Set<? extends Element> mLLOnClickElements = roundEnvironment.getElementsAnnotatedWith(LLBindView.class);
+        Set<? extends Element> mLLOnClickElements = roundEnvironment.getElementsAnnotatedWith(LLOnClick.class);
 
         if (null == mLLOnClickElements || mLLOnClickElements.size() <= 0){
             print("not element with bindView annotation");
@@ -109,22 +109,22 @@ public class LLBindViewProcess extends AbstractProcessor {
         }
 
         for (Element element : mLLOnClickElements){
-            if (element.getKind() != ElementKind.FIELD){
+            if (element.getKind() != ElementKind.METHOD){
                 continue;
             }
-            VariableElement variableElement = (VariableElement) element;
-            TypeElement typeElement = (TypeElement) variableElement.getEnclosingElement();
+            TypeElement typeElement = (TypeElement) element.getEnclosingElement();
             String className = typeElement.getQualifiedName().toString();
             String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
             int[] resourceIdParam = element.getAnnotation(LLOnClick.class).value();
 
             ProxyInfo proxyInfo = proxyInfoMap.get(className);
+
             if (null == proxyInfo){
                 proxyInfo = new ProxyInfo(packageName, typeElement);
                 proxyInfoMap.put(className, proxyInfo);
             }
             for (int id : resourceIdParam){
-                proxyInfo.validationEventMap_OnClick.put(id, variableElement);
+                proxyInfo.validationEventMap_OnClick.put(id, element);
             }
         }
     }
@@ -144,7 +144,7 @@ public class LLBindViewProcess extends AbstractProcessor {
 
     private void print(String msg){
         if (null != messager){
-            messager.printMessage(Diagnostic.Kind.NOTE, msg);
+            messager.printMessage(Diagnostic.Kind.NOTE, "====" + msg);
         }
     }
 }

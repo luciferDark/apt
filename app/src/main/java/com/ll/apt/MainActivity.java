@@ -4,9 +4,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.ll.apt_annotation.LLBindView;
+import com.ll.apt_annotation.LLOnClick;
 import com.ll.apt_library.KylinKnife;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,6 +25,15 @@ public class MainActivity extends AppCompatActivity {
             textView.setText("sdadasd");
         } else {
             Log.d(TAG, "onCreate: textView is null");
+        }
+    }
+
+    @LLOnClick(R.id.test_apt)
+    public void textViewOnclick(View view){
+        if (textView != null){
+            textView.setText("textViewOnclick");
+        } else {
+            Log.d(TAG, "textViewOnclick: textView is null");
         }
     }
 }

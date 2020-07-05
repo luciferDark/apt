@@ -9,6 +9,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -22,7 +23,7 @@ import javax.lang.model.element.VariableElement;
 public class ProxyInfo {
     private static final String PORXY_INDEX = "_ViewBinding";
     public Map<Integer, VariableElement> validationEventMap_BindView = new HashMap<>();
-    public Map<Integer, VariableElement> validationEventMap_OnClick = new HashMap<>();
+    public Map<Integer, Element> validationEventMap_OnClick = new HashMap<>();
     public String proxyClassName;
     public String proxyClassNameNew;
     public String proxyClassPackageName;
@@ -64,23 +65,40 @@ public class ProxyInfo {
             VariableElement element = validationEventMap_BindView.get(id);
             String fieldName = element.getSimpleName().toString();
             methodBuilder.addStatement(" if(source instanceof android.app.Activity){\n" +
-                            "\ttarget.$L = ((android.app.Activity) source).findViewById( $L); " +
+                            "\ttarget.$L = ((android.app.Activity) source).findViewById( $L);\n" +
                             "} else {\n" +
                             "\ttarget.$L = ((android.view.View) source).findViewById( $L);\n" +
-                            "}",
+                            "}\n",
                     fieldName, id,
                     fieldName, id);
         }
 
+//        target.textView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                target.onclick(view)
+//            }
+//        });
         for (int id : validationEventMap_OnClick.keySet()) {
-            VariableElement element = validationEventMap_BindView.get(id);
+            Element element = validationEventMap_OnClick.get(id);
             String fieldName = element.getSimpleName().toString();
-
-            methodBuilder.addStatement(" if(source instanceof android.app.Activity){\n" +
-                    "\ttarget.$L = ((android.app.Activity) source).findViewById( $L);\n " +
+            methodBuilder.addStatement("if(source instanceof android.app.Activity){\n" +
+                    "\t(((android.app.Activity) source).findViewById($L))\n.setOnClickListener(new android.view.View.OnClickListener() {\n " +
+                    "\t\t@Override\n" +
+                    "\t\tpublic void onClick(android.view.View view) {\n" +
+                    "\t\t\ttarget.$L(view);\n "+
+                    "\t\t}\n"+
+                    "\t});\n"+
                     "} else {\n" +
-                    "\ttarget.$L = ((android.view.View) source).findViewById( $L);\n" +
-                    "}");
+                    "\t(((android.view.View) source).findViewById($L))\n.setOnClickListener(new android.view.View.OnClickListener() {\n " +
+                    "\t\t@Override\n" +
+                    "\t\tpublic void onClick(android.view.View view) {\n" +
+                    "\t\t\ttarget.$L(view);\n "+
+                    "\t\t}\n"+
+                    "\t});\n"+
+                    "}\n",
+                    id, fieldName,
+                    id, fieldName);
         }
 
         MethodSpec bindMethodSpec = methodBuilder.build();
