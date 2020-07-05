@@ -15,6 +15,8 @@ public class MainActivity extends AppCompatActivity {
     public static  String TAG = "MainActivity";
     @LLBindView(R.id.test_apt)
     TextView textView;
+    @LLBindView(R.id.test_apt_1)
+    TextView textView1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,14 @@ public class MainActivity extends AppCompatActivity {
     public void textViewOnclick(View view){
         if (textView != null){
             textView.setText("textViewOnclick");
+        } else {
+            Log.d(TAG, "textViewOnclick: textView is null");
+        }
+    }
+    @LLOnClick(R.id.test_apt_1)
+    public void textViewOnclick1(View view){
+        if (textView1 != null){
+            textView1.setText("textViewOnclick1");
         } else {
             Log.d(TAG, "textViewOnclick: textView is null");
         }
